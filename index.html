@@ -9,24 +9,30 @@
         h2 { color: pink; text-shadow: 1px 1px 5px rgba(255, 192, 203, 0.5); margin-bottom: 5px; }
         .sub { color: #aaa; font-size: 13px; margin-bottom: 20px; }
         
-        /* Grid Anime Box */
+        /* Kolom Pencarian Semua Anime */
+        .search-box { margin-bottom: 25px; display: flex; justify-content: center; gap: 10px; }
+        .search-box input { padding: 12px; width: 65%; max-width: 400px; border-radius: 25px; border: 2px solid pink; background: #222; color: #fff; font-size: 14px; outline: none; }
+        .search-box button { padding: 12px 20px; border-radius: 25px; border: none; background: pink; color: #111; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .search-box button:hover { background: #ffb6c1; }
+
+        /* Grid Kotak Anime */
         .grid-anime { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; padding: 15px; max-width: 800px; margin: auto; }
-        .kartu-anime { background: #222; border-radius: 8px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.2s; position: relative; }
+        .kartu-anime { background: #222; border-radius: 8px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.2s; }
         .kartu-anime:hover { border-color: pink; transform: scale(1.03); }
         .kartu-anime img { width: 100%; height: 195px; object-fit: cover; }
         .judul-anime { font-size: 12px; font-weight: bold; padding: 8px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* Player Box */
-        #player-container { display: none; margin: 0 auto 20px auto; background: #000; padding: 15px; border-radius: 10px; border: 2px solid pink; max-width: 720px; }
+        /* Player Box Langsung di Tempat */
+        #player-container { display: none; margin: 0 auto 25px auto; background: #000; padding: 15px; border-radius: 10px; border: 2px solid pink; max-width: 720px; }
         .wrapper-video { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 5px; background: #1a1a1a; }
+        
+        /* Iframe Super Kebal Biar Bisa Dipencet Langsung */
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
         
-        /* Tombol & Navigasi */
+        /* Kontrol Navigasi */
         .btn-tutup { background: #ff4d4d; color: white; border: none; padding: 6px 15px; border-radius: 4px; margin-bottom: 12px; cursor: pointer; font-weight: bold; }
-        .btn-tutup:hover { background: red; }
         .kontrol-box { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        select, button.btn-server { padding: 8px 12px; background: #222; color: pink; border: 1px solid pink; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        button.btn-server.aktif { background: pink; color: #111; }
+        select { padding: 8px 12px; background: #222; color: pink; border: 1px solid pink; border-radius: 5px; font-weight: bold; cursor: pointer; }
         
         #status { font-size: 16px; margin-top: 50px; color: pink; font-weight: bold; }
     </style>
@@ -34,7 +40,12 @@
 <body>
 
     <h2>FryMedia Anime Center 🍿🗿</h2>
-    <div class="sub">Server Otomatis Multi-Jalur — Sekali Upload Langsung Tayang!</div>
+    <div class="sub">Database Semua Anime Global — Tinggal Cari, Klik, dan Putar Langsung!</div>
+
+    <div class="search-box">
+        <input type="text" id="keyword-pencarian" placeholder="Ketik judul anime di sini... (misal: Otonari no Tenshi)">
+        <button onclick="cariAnime()">Cari Anime 🔍</button>
+    </div>
 
     <div id="player-container">
         <button class="btn-tutup" onclick="tutupPlayer()">Tutup Player ❌</button>
@@ -46,100 +57,103 @@
 
         <div class="kontrol-box">
             <div>
-                <label for="pilih-episode">Eps: </label>
+                <label for="pilih-episode">Pilih Episode: </label>
                 <select id="pilih-episode" onchange="gantiEpisode()"></select>
             </div>
-            <button id="srv-1" class="btn-server aktif" onclick="gantiServer(1)">Server Alpha 🚀</button>
-            <button id="srv-2" class="btn-server" onclick="gantiServer(2)">Server Beta ⚡</button>
         </div>
     </div>
 
-    <div id="status">Menghubungkan ke Pemancar Anime... ⏳</div>
+    <div id="status">Memuat rekomendasi anime terpopuler... ⏳</div>
     
     <div class="grid-anime" id="tempat-anime"></div>
 
     <script>
         let animeIdAktif = "";
         let episodeAktif = 1;
-        let serverAktif = 1;
 
-        // Tarik data Top Anime Airing dari Jikan API (MyAnimeList) - Dijamin Lolos Keamanan Browser HP
-        fetch("https://api.jikan.moe/v4/top/anime?filter=airing&limit=24")
-        .then(res => {
-            if (!res.ok) throw new Error();
-            return res.json();
-        })
-        .then(response => {
-            document.getElementById("status").style.display = "none";
-            const topAnime = response.data;
-            let html = "";
+        // Pas pertama kali web dibuka, langsung tampilin Top 24 Anime Terpopuler di Dunia secara otomatis
+        muatDaftarAnime("https://api.jikan.moe/v4/top/anime?limit=24");
 
-            topAnime.forEach(anime => {
-                const poster = anime.images.jpg.large_image_url;
-                const judul = anime.title_english || anime.title;
-                const idMal = anime.mal_id;
-                
-                html += `
-                    <div class="kartu-anime" onclick="bukaAnime('${idMal}', '${judul.replace(/'/g, "\\'")}')">
-                        <img src="${poster}" alt="${judul}" loading="lazy">
-                        <div class="judul-anime">${judul}</div>
-                    </div>
-                `;
+        // Fungsi utama menarik data dari database raksasa MyAnimeList
+        function muatDaftarAnime(url) {
+            document.getElementById("status").style.display = "block";
+            document.getElementById("status").innerText = "Membuka gerbang satelit anime... ⏳";
+            
+            fetch(url)
+            .then(res => res.json())
+            .then(response => {
+                document.getElementById("status").style.display = "none";
+                const daftarAnime = response.data;
+                let html = "";
+
+                if (!daftarAnime || daftarAnime.length === 0) {
+                    document.getElementById("status").style.display = "block";
+                    document.getElementById("status").innerText = "Anime gak ketemu, coba ketik judul lain! 🗿";
+                    return;
+                }
+
+                daftarAnime.forEach(anime => {
+                    const poster = anime.images.jpg.large_image_url;
+                    const judul = anime.title_english || anime.title;
+                    const idMal = anime.mal_id;
+                    
+                    html += `
+                        <div class="kartu-anime" onclick="bukaPlayer('${idMal}', '${judul.replace(/'/g, "\\'")}')">
+                            <img src="${poster}" alt="${judul}" loading="lazy">
+                            <div class="judul-anime">${judul}</div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById("tempat-anime").innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById("status").innerText = "Koneksi sibuk, silakan coba lagi atau refresh halaman 🗿";
             });
+        }
 
-            document.getElementById("tempat-anime").innerHTML = html;
-        })
-        .catch(err => {
-            document.getElementById("status").innerText = "Gagal memuat satelit anime, silakan refresh halaman 🗿";
-        });
+        // Fungsi Pencarian Aktif buat Nyari SEMUA ANIME yang pernah ada di dunia
+        function cariAnime() {
+            const keyword = document.getElementById("keyword-pencarian").value;
+            if (!keyword) {
+                alert("Ketik dulu judul animenya woi! 🗿");
+                return;
+            }
+            const urlCari = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(keyword)}&limit=24`;
+            muatDaftarAnime(urlCari);
+        }
 
-        // Fungsi Membuka Player dan Menyiapkan Episode
-        function bukaAnime(idMal, judul) {
+        // Fungsi saat kartu anime dipencet: Membuka Player Video langsung di tempat
+        function bukaPlayer(idMal, judul) {
             animeIdAktif = idMal;
             episodeAktif = 1;
             
             document.getElementById("player-container").style.display = "block";
-            document.getElementById("judul-aktif").innerText = "Sekarang Menonton: " + judul;
+            document.getElementById("judul-aktif").innerText = "Memutar: " + judul;
 
-            // Generate otomatis list 24 episode biar aman dan gak manual
+            // Menyediakan pilihan 24 episode otomatis biar gak kosong dan bebas klik
             const dropdown = document.getElementById("pilih-episode");
             dropdown.innerHTML = "";
             for (let i = 1; i <= 24; i++) {
                 dropdown.innerHTML += `<option value="${i}">Episode ${i}</option>`;
             }
 
-            muatVideo();
+            muatVideoAsli();
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // Fungsi Inti Mengatur URL Streamer dari Dua Server Berbeda
-        function muatVideo() {
+        // Fungsi Meload Video Masuk ke Dalam Iframe (Bisa dipencet langsung tanpa buka tab baru)
+        function muatVideoAsli() {
             const iframe = document.getElementById("video-iframe");
-            
-            if (serverAktif === 1) {
-                // Server Utama (Vidsrc Alpha)
-                iframe.src = `https://vidsrc.to/embed/anime/${animeIdAktif}/${episodeAktif}`;
-            } else {
-                // Server Cadangan (Vidsrc Beta Pro)
-                iframe.src = `https://vidsrc.xyz/embed/anime/${animeIdAktif}/${episodeAktif}`;
-            }
+            // Menembak server multi-jalur otomatis yang langsung sinkron dengan ID Anime-nya
+            iframe.src = `https://vidsrc.to/embed/anime/${animeIdAktif}/${episodeAktif}`;
         }
 
-        // Ganti Episode Lewat Dropdown
         function gantiEpisode() {
             episodeAktif = document.getElementById("pilih-episode").value;
-            muatVideo();
+            muatVideoAsli();
         }
 
-        // Pindah Jaringan Server Jika Salah Satu Macet
-        function gantiServer(nomorServer) {
-            serverAktif = nomorServer;
-            document.getElementById("srv-1").classList.toggle("aktif", nomorServer === 1);
-            document.getElementById("srv-2").classList.toggle("aktif", nomorServer === 2);
-            muatVideo();
-        }
-
-        // Matikan Player
         function tutupPlayer() {
             const iframe = document.getElementById("video-iframe");
             iframe.src = "";
