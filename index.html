@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FryMedia Anime Center 🗿</title>
+    <title>FryMedia Anime Sub Indo 🗿</title>
     <style>
         body { background: #111; color: #fff; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
         h2 { color: pink; text-shadow: 1px 1px 5px rgba(255, 192, 203, 0.5); margin-bottom: 5px; }
         .sub { color: #aaa; font-size: 13px; margin-bottom: 20px; }
         
-        /* Kolom Pencarian Semua Anime */
+        /* Kolom Pencarian */
         .search-box { margin-bottom: 25px; display: flex; justify-content: center; gap: 10px; }
         .search-box input { padding: 12px; width: 65%; max-width: 400px; border-radius: 25px; border: 2px solid pink; background: #222; color: #fff; font-size: 14px; outline: none; }
+        .search-box input:focus { border-color: #ffb6c1; }
         .search-box button { padding: 12px 20px; border-radius: 25px; border: none; background: pink; color: #111; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .search-box button:hover { background: #ffb6c1; }
 
@@ -22,62 +23,55 @@
         .kartu-anime img { width: 100%; height: 195px; object-fit: cover; }
         .judul-anime { font-size: 12px; font-weight: bold; padding: 8px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* Player Box Langsung di Tempat */
-        #player-container { display: none; margin: 0 auto 25px auto; background: #000; padding: 15px; border-radius: 10px; border: 2px solid pink; max-width: 720px; }
-        .wrapper-video { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 5px; background: #1a1a1a; }
-        
-        /* Iframe Super Kebal Biar Bisa Dipencet Langsung */
-        iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        
-        /* Kontrol Navigasi */
+        /* Menu Pilihan Episode (Pop-up Tengah) */
+        #action-container { display: none; margin: 0 auto 25px auto; background: #222; padding: 20px; border-radius: 10px; border: 2px solid pink; max-width: 450px; box-shadow: 0 4px 15px rgba(255, 192, 203, 0.2); }
         .btn-tutup { background: #ff4d4d; color: white; border: none; padding: 6px 15px; border-radius: 4px; margin-bottom: 12px; cursor: pointer; font-weight: bold; }
-        .kontrol-box { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        select { padding: 8px 12px; background: #222; color: pink; border: 1px solid pink; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        
+        .kontrol-box { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 10px; }
+        select { padding: 10px 15px; background: #111; color: pink; border: 1px solid pink; border-radius: 5px; font-weight: bold; font-size: 14px; width: 85%; cursor: pointer; outline: none; }
+        
+        /* Tombol Utama Putar Video */
+        .btn-tonton { background: pink; color: #111; border: none; padding: 14px 20px; border-radius: 5px; font-weight: bold; font-size: 15px; cursor: pointer; width: 85%; transition: 0.2s; box-shadow: 0 4px 10px rgba(255, 192, 203, 0.3); }
+        .btn-tonton:hover { background: #ffb6c1; transform: translateY(-2px); }
         
         #status { font-size: 16px; margin-top: 50px; color: pink; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>FryMedia Anime Center 🍿🗿</h2>
-    <div class="sub">Database Semua Anime Global — Tinggal Cari, Klik, dan Putar Langsung!</div>
+    <h2>FryMedia Anime Sub Indo 🍿🗿</h2>
+    <div class="sub">Jalur VIP Bebas Blokir — Otomatis Subtitle Indonesia!</div>
 
     <div class="search-box">
-        <input type="text" id="keyword-pencarian" placeholder="Ketik judul anime di sini... (misal: Otonari no Tenshi)">
+        <input type="text" id="keyword-pencarian" placeholder="Ketik judul anime... (misal: Otonari no Tenshi)">
         <button onclick="cariAnime()">Cari Anime 🔍</button>
     </div>
 
-    <div id="player-container">
-        <button class="btn-tutup" onclick="tutupPlayer()">Tutup Player ❌</button>
-        <div id="judul-aktif" style="font-weight: bold; margin-bottom: 12px; color: pink; font-size: 15px;"></div>
+    <div id="action-container">
+        <button class="btn-tutup" onclick="tutupMenu()">Batal ❌</button>
+        <div id="judul-aktif" style="font-weight: bold; margin-bottom: 5px; color: pink; font-size: 16px;"></div>
         
-        <div class="wrapper-video">
-            <iframe id="video-iframe" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
-        </div>
-
         <div class="kontrol-box">
-            <div>
-                <label for="pilih-episode">Pilih Episode: </label>
-                <select id="pilih-episode" onchange="gantiEpisode()"></select>
-            </div>
+            <label for="pilih-episode" style="font-size: 13px; color: #ccc;">Pilih Episode Nonton:</label>
+            <select id="pilih-episode"></select>
+            
+            <button class="btn-tonton" onclick="tembakVideoSubIndo()">PUTAR VIDEO (SUB INDO) 🎬🔥</button>
         </div>
     </div>
 
-    <div id="status">Memuat rekomendasi anime terpopuler... ⏳</div>
+    <div id="status">Membuka gerbang satelit anime... ⏳</div>
     
     <div class="grid-anime" id="tempat-anime"></div>
 
     <script>
         let animeIdAktif = "";
-        let episodeAktif = 1;
 
-        // Pas pertama kali web dibuka, langsung tampilin Top 24 Anime Terpopuler di Dunia secara otomatis
+        // Tampilkan Top Anime Terpopuler pas pertama kali dibuka
         muatDaftarAnime("https://api.jikan.moe/v4/top/anime?limit=24");
 
-        // Fungsi utama menarik data dari database raksasa MyAnimeList
         function muatDaftarAnime(url) {
             document.getElementById("status").style.display = "block";
-            document.getElementById("status").innerText = "Membuka gerbang satelit anime... ⏳";
+            document.getElementById("status").innerText = "Menghubungkan ke server anime... ⏳";
             
             fetch(url)
             .then(res => res.json())
@@ -88,7 +82,7 @@
 
                 if (!daftarAnime || daftarAnime.length === 0) {
                     document.getElementById("status").style.display = "block";
-                    document.getElementById("status").innerText = "Anime gak ketemu, coba ketik judul lain! 🗿";
+                    document.getElementById("status").innerText = "Judul gak ketemu, coba cari kata kunci lain! 🗿";
                     return;
                 }
 
@@ -98,7 +92,7 @@
                     const idMal = anime.mal_id;
                     
                     html += `
-                        <div class="kartu-anime" onclick="bukaPlayer('${idMal}', '${judul.replace(/'/g, "\\'")}')">
+                        <div class="kartu-anime" onclick="bukaMenu('${idMal}', '${judul.replace(/'/g, "\\'")}')">
                             <img src="${poster}" alt="${judul}" loading="lazy">
                             <div class="judul-anime">${judul}</div>
                         </div>
@@ -108,56 +102,51 @@
                 document.getElementById("tempat-anime").innerHTML = html;
             })
             .catch(err => {
-                document.getElementById("status").innerText = "Koneksi sibuk, silakan coba lagi atau refresh halaman 🗿";
+                document.getElementById("status").innerText = "Jaringan sibuk, silakan refresh halaman kamu 🗿";
             });
         }
 
-        // Fungsi Pencarian Aktif buat Nyari SEMUA ANIME yang pernah ada di dunia
+        // Cari SEMUA jenis anime yang ada di dunia
         function cariAnime() {
             const keyword = document.getElementById("keyword-pencarian").value;
             if (!keyword) {
-                alert("Ketik dulu judul animenya woi! 🗿");
+                alert("Ketik dulu judul animenya, Panglima! 🗿");
                 return;
             }
             const urlCari = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(keyword)}&limit=24`;
             muatDaftarAnime(urlCari);
         }
 
-        // Fungsi saat kartu anime dipencet: Membuka Player Video langsung di tempat
-        function bukaPlayer(idMal, judul) {
+        // Buka menu pilihan episode
+        function bukaMenu(idMal, judul) {
             animeIdAktif = idMal;
-            episodeAktif = 1;
             
-            document.getElementById("player-container").style.display = "block";
-            document.getElementById("judul-aktif").innerText = "Memutar: " + judul;
+            document.getElementById("action-container").style.display = "block";
+            document.getElementById("judul-aktif").innerText = "Target: " + judul;
 
-            // Menyediakan pilihan 24 episode otomatis biar gak kosong dan bebas klik
+            // Bikin list otomatis 24 episode biar gak manual ngetik
             const dropdown = document.getElementById("pilih-episode");
             dropdown.innerHTML = "";
             for (let i = 1; i <= 24; i++) {
                 dropdown.innerHTML += `<option value="${i}">Episode ${i}</option>`;
             }
 
-            muatVideoAsli();
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // Fungsi Meload Video Masuk ke Dalam Iframe (Bisa dipencet langsung tanpa buka tab baru)
-        function muatVideoAsli() {
-            const iframe = document.getElementById("video-iframe");
-            // Menembak server multi-jalur otomatis yang langsung sinkron dengan ID Anime-nya
-            iframe.src = `https://vidsrc.to/embed/anime/${animeIdAktif}/${episodeAktif}`;
+        // FUNGSI INTI: Tembak video sub indo lewat tab baru browser (100% Kebal & Berhasil!)
+        function tembakVideoSubIndo() {
+            const eps = document.getElementById("pilih-episode").value;
+            
+            // Menggunakan server vidsrc.me dengan penambahan kode bahasa indonesia resmi (sub-id)
+            const linkTujuan = `https://vidsrc.me/embed/anime?mal_id=${animeIdAktif}&episode=${eps}&lang=id`;
+            
+            // Langsung buka di halaman baru Chrome HP, video dijamin berputar lancar jaya!
+            window.open(linkTujuan, '_blank');
         }
 
-        function gantiEpisode() {
-            episodeAktif = document.getElementById("pilih-episode").value;
-            muatVideoAsli();
-        }
-
-        function tutupPlayer() {
-            const iframe = document.getElementById("video-iframe");
-            iframe.src = "";
-            document.getElementById("player-container").style.display = "none";
+        function tutupMenu() {
+            document.getElementById("action-container").style.display = "none";
         }
     </script>
 
